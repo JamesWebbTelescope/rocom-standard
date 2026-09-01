@@ -321,6 +321,199 @@ for sp in supps:
 PYEOF
 echo "  supplements.html"
 
+# Changes page — parse cp-registry.md, render CP/Sup table + explanation, + individual CP pages
+python3 - "$REPO_DIR" "$OUTPUT_DIR" "$TEMPLATE" << 'PYEOF'
+import sys, os, re, subprocess, glob
+
+repo_dir, output_dir, template = sys.argv[1:]
+
+def html_esc(s):
+    return str(s).replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;')
+
+def status_badge(status):
+    s = status.upper().strip()
+    cls = 'badge-proposal'
+    label = s
+    if s in ('RATIFIED', 'MERGED'):
+        cls = 'badge-ratified'
+        label = 'RATIFIED'
+    elif s == 'SUPERSEDED':
+        cls = 'badge-superseded'
+    elif s == 'RESERVED':
+        cls = 'badge-reserved'
+    elif s in ('DRAFT',):
+        cls = 'badge-draft-status'
+    elif s == 'PROPOSAL':
+        cls = 'badge-proposal'
+    return f'<span class="badge {cls}">{label}</span>', cls
+
+def parse_registry(path):
+    cps = []
+    sups = []
+    if not os.path.exists(path):
+        return cps, sups
+    with open(path) as f:
+        text = f.read()
+    in_section = None
+    for line in text.splitlines():
+        if line.strip() == '## Correction Proposals':
+            in_section = 'cp'
+            continue
+        elif line.strip() == '## Supplements':
+            in_section = 'sup'
+            continue
+        elif line.startswith('## '):
+            in_section = None
+            continue
+        m = re.match(r'^\|(.*)\|$', line.strip())
+        if not m or in_section is None:
+            continue
+        cells = [c.strip() for c in m.group(1).split('|')]
+        if len(cells) < 5 or cells[0] in ('CP', 'Sup', '----', '-----'):
+            continue
+        if in_section == 'cp':
+            cps.append({
+                'id': cells[0], 'title': cells[1], 'commit': cells[2],
+                'date': cells[3], 'status': cells[4],
+                'repo': cells[5] if len(cells) > 5 else ''
+            })
+        elif in_section == 'sup':
+            sups.append({
+                'id': cells[0], 'title': cells[1], 'commit': cells[2],
+                'date': cells[3], 'status': cells[4]
+            })
+    return cps, sups
+
+def infer_part(title):
+    t = title.lower()
+    if any(k in t for k in ['architecture', 'overview', 'scope', 'arm', 'reference model']):
+        return 'Part 1'
+    if any(k in t for k in ['conformance']):
+        return 'Part 2'
+    if any(k in t for k in ['information model', 'agent identity', 'data model', 'costmodel', 'cost']):
+        return 'Part 3'
+    if any(k in t for k in ['service', 'contract', 'orchestrator', 'api', 'interface']):
+        return 'Part 4'
+    if any(k in t for k in ['transport', 'vda', 'profile', 'binding']):
+        return 'Part 5'
+    if any(k in t for k in ['security']):
+        return 'Part 6'
+    if any(k in t for k in ['data governance', 'governance', 'privacy']):
+        return 'Part 7'
+    return 'General'
+
+# Parse registry
+cps, sups = parse_registry(os.path.join(repo_dir, 'spec', 'cp-registry.md'))
+
+# Build registry_id -> filename mapping from actual CP files
+cp_files = sorted(glob.glob(os.path.join(repo_dir, 'spec', 'cp-*.md')))
+cp_id_to_file = {}
+for cp_path in cp_files:
+    bn = os.path.basename(cp_path).replace('.md', '')
+    m_cp = re.match(r'(cp-\d+)', bn, re.I)
+    if m_cp:
+        cp_id_to_file[m_cp.group(1)] = bn
+
+# Sort: PROPOSAL first, then all by date descending
+def cp_sort_key(x):
+    s = x['status'].upper()
+    if s == 'PROPOSAL':
+        return (0, x['date'])
+    return (1, x['date'])
+cps_sorted = sorted(cps, key=cp_sort_key, reverse=True)
+# Fix: PROPOSAL should be first regardless, then rest by date desc
+cps_proposal = [x for x in cps if x['status'].upper() == 'PROPOSAL']
+cps_other = [x for x in cps if x['status'].upper() != 'PROPOSAL']
+cps_other.sort(key=lambda x: x['date'], reverse=True)
+cps_sorted = cps_proposal + cps_other
+
+# Build changes page
+content = """<div class="content">
+<h2>What Is a Change Record?</h2>
+<p>The Rocom specification evolves through a structured change process with three mechanisms, modeled after standards bodies like DICOM and IEC:</p>
+<ul>
+<li><strong>Editions</strong> — Major revisions that produce a new version of the specification (e.g., Edition 2026a, Edition 2027a). Editions are published after broad review and may contain breaking changes.</li>
+<li><strong>Supplements</strong> — Additions or significant modifications between editions. Supplements add new normative content, annexes, or profiles without replacing existing text. They are incorporated into the next edition.</li>
+<li><strong>Correction Proposals (CPs)</strong> — Targeted fixes, clarifications, or small improvements to an existing edition. Each CP addresses a single issue and is tracked through proposal, review, and ratification.</li>
+</ul>
+
+<h2>Correction Proposals</h2>
+<p>Each CP below shows its current status. A <span class="badge badge-proposal">PROPOSAL</span> is under review and is not yet normative text. A <span class="badge badge-ratified">RATIFIED</span> has been accepted and incorporated into the specification. <span class="badge badge-superseded">SUPERSEDED</span> has been replaced by a later change.</p>
+<table>
+<thead><tr><th style="width:70px">CP</th><th>Title</th><th style="width:90px">Status</th><th style="width:90px">Date</th><th style="width:80px">Part</th></tr></thead>
+<tbody>
+"""
+
+for cp in cps_sorted:
+    badge, _ = status_badge(cp['status'])
+    part = infer_part(cp['title'])
+    cp_slug = cp_id_to_file.get(cp['id'].lower())
+    if cp_slug:
+        cp_id_cell = f'<a href="cp-{cp_slug}.html">{html_esc(cp["id"])}</a>'
+    else:
+        cp_id_cell = html_esc(cp['id'])
+    content += f'<tr><td>{cp_id_cell}</td><td>{html_esc(cp["title"])}</td><td>{badge}</td><td>{html_esc(cp["date"])}</td><td>{html_esc(part)}</td></tr>\n'
+
+content += """</tbody></table>
+
+<h2>Supplements</h2>
+<table>
+<thead><tr><th style="width:80px">Sup</th><th>Title</th><th style="width:90px">Status</th><th style="width:90px">Date</th></tr></thead>
+<tbody>
+"""
+
+for sup in sups:
+    badge, _ = status_badge(sup['status'])
+    sup_slug = sup['id'].lower()
+    link = f'<a href="supplement-{sup_slug}.html">{html_esc(sup["id"])}</a>'
+    content += f'<tr><td>{link}</td><td>{html_esc(sup["title"])}</td><td>{badge}</td><td>{html_esc(sup["date"])}</td></tr>\n'
+
+content += '</tbody></table></div>'
+
+with open(template) as f:
+    tpl = f.read()
+html = tpl.replace('{{TITLE}}', 'Changes — Correction Proposals &amp; Supplements').replace('{{CONTENT}}', content)
+with open(os.path.join(output_dir, 'changes.html'), 'w') as f:
+    f.write(html)
+
+# Individual CP pages
+for cp_path in cp_files:
+    bn = os.path.basename(cp_path).replace('.md', '')
+    with open(cp_path) as f:
+        raw = f.read()
+    file_status = 'PROPOSAL'
+    for line in raw.splitlines():
+        m = re.match(r'^\*\*Status:\*\*\s*(.+)', line)
+        if m:
+            file_status = m.group(1).strip()
+            break
+    title = bn
+    for line in raw.splitlines():
+        if line.startswith('# '):
+            title = line[2:].strip()
+            break
+    badge, _ = status_badge(file_status)
+    status_meta = f"<div class='doc-meta'><strong>Correction Proposal: {html_esc(bn)}</strong> &nbsp; {badge}</div>"
+    clean = re.sub(r'^\*\*Status:\*\*.*$', '', raw, flags=re.M)
+    clean = re.sub(r'\n{3,}', '\n\n', clean)
+    try:
+        result = subprocess.run(
+            ['pandoc', '-f', 'markdown', '-t', 'html', '--wrap=none'],
+            input=clean, capture_output=True, text=True, check=True
+        )
+        body = result.stdout
+    except Exception:
+        body = '<pre>' + html_esc(clean) + '</pre>'
+    full_content = status_meta + '<div class="content">' + body + '</div>'
+    with open(template) as f:
+        tpl = f.read()
+    page_html = tpl.replace('{{TITLE}}', title).replace('{{CONTENT}}', full_content)
+    with open(os.path.join(output_dir, f'cp-{bn}.html'), 'w') as f:
+        f.write(page_html)
+
+PYEOF
+echo "  changes.html"
+
 # CNAME for custom domain
 if [ -f "$REPO_DIR/build/CNAME" ]; then
   cp "$REPO_DIR/build/CNAME" "$OUTPUT_DIR/CNAME"
