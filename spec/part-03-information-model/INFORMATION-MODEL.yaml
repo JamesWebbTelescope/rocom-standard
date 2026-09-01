@@ -5,6 +5,13 @@
 # License: CC-BY 4.0 (see LICENSE-SPEC)
 # Scope: Core data types referenced by Parts 4, 5, 6, 7.
 #        Contracts and profiles MUST use these types verbatim.
+#
+# Open correction proposals:
+#   CP-007 — Agent Identity Model (issuer-agnostic, UDI-aligned)
+#     Replaces the flat agent_id/hr_ref model with a three-layer
+#     identity structure (access_key, device_identifier,
+#     production_identifier) and adds lookup by serial_number.
+#     Status: PROPOSAL. See spec/cp-007-agent-identity.md
 # =====================================================================
 
 module: information-model
