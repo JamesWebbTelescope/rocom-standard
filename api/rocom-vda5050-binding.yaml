@@ -1,12 +1,26 @@
-# FILE: specs/rocom-vda5050-binding.yaml
-asyncapi: "3.0.0"
+# FILE: api/rocom-vda5050-binding.yaml
+asyncapi: 3.0.0
 info:
   title: Rocom VDA 5050 Binding
-  version: "0.1.0"
+  version: 0.1.0
   description: >
     Rocom healthcare profile binding on top of VDA 5050 standard topics.
     Extensions live exclusively on rocom/v0/ topics — standard VDA 5050
     messages are never modified.
+  license:
+    name: CC BY 4.0
+    url: https://creativecommons.org/licenses/by/4.0/
+  contact:
+    name: Rocom Project
+    email: specs@techhappens.eu
+    url: https://rocom.org
+  tags:
+    - name: healthcare-robotics
+      description: Healthcare robotics orchestration
+    - name: orchestration
+      description: Multi-agent task orchestration
+    - name: vda5050
+      description: VDA 5050 AGV protocol binding
 
 servers:
   production:
@@ -15,238 +29,282 @@ servers:
     description: Mosquitto MQTT broker
 
 channels:
-  vda5050/factsheet:
+  vda5050-factsheet:
+    address: vda5050/factsheet
     description: Standard VDA 5050 factsheet — robot declares itself
-    subscribers:
-      vda5050-gateway:
-        bind:
-          mqtt:
-            qos: 1
-    messages:
-      FactsheetMessage:
-        payload:
-          type: object
-          required: [manufacturer, model, serialNumber, capabilities, version]
-          properties:
-            manufacturer:
-              type: string
-            model:
-              type: string
-            serialNumber:
-              type: string
-            capabilities:
-              type: object
-              additionalProperties: true
-            version:
-              type: object
-              properties:
-                vda5050:
-                  type: string
-                manufacturer:
-                  type: string
 
-  vda5050/state/+/{serialNumber}:
+  vda5050-state:
+    address: vda5050/state/+/{serialNumber}
     description: Standard VDA 5050 state updates per robot
-    subscribers:
-      vda5050-gateway:
-        bind:
-          mqtt:
-            qos: 1
-    messages:
-      StateMessage:
-        payload:
-          type: object
-          required: [position, battery, state, timestamp]
-          properties:
-            position:
-              type: object
-              properties:
-                building:
-                  type: string
-                floor:
-                  type: string
-                node:
-                  type: string
-            battery:
-              type: number
-              minimum: 0
-              maximum: 100
-            state:
-              type: string
-              enum: [IDLE, MOVING, WORKING, CHARGING, ERROR]
-            timestamp:
-              type: string
-              format: date-time
 
-  vda5050/connection/+/{serialNumber}:
+  vda5050-connection:
+    address: vda5050/connection/+/{serialNumber}
     description: Connection state (online/offline)
-    subscribers:
-      vda5050-gateway:
-        bind:
-          mqtt:
-            qos: 1
-    messages:
-      ConnectionMessage:
-        payload:
-          type: object
-          required: [online]
-          properties:
-            online:
-              type: boolean
 
-  vda5050/order/+/{serialNumber}:
+  vda5050-order:
+    address: vda5050/order/+/{serialNumber}
     description: Standard VDA 5050 order dispatch
-    publishers:
-      vda5050-gateway:
-        messages:
-          - OrderMessage
-    messages:
-      OrderMessage:
-        payload:
-          type: object
-          required: [orderId, sequence, timestamp]
-          properties:
-            orderId:
-              type: string
-              description: Carries orchestrator allocation ID
-            sequence:
-              type: array
-              items:
-                $ref: "#/components/schemas/NavigationNode"
-            timestamp:
-              type: string
-              format: date-time
 
-  vda5050/cancel/+/{serialNumber}:
+  vda5050-cancel:
+    address: vda5050/cancel/+/{serialNumber}
     description: Order cancellation
-    publishers:
-      vda5050-gateway:
-        messages:
-          - CancelMessage
-    messages:
-      CancelMessage:
-        payload:
-          type: object
-          required: [orderId]
-          properties:
-            orderId:
-              type: string
 
-  rocom/v0/compliance/event:
+  rocom-compliance-event:
+    address: rocom/v0/compliance/event
     description: >
       Rocom extension — compliance events published on zone transitions.
       Correlates to the orchestrator audit trail via taskId and agentId.
-    subscribers:
-      vda5050-gateway:
-        bind:
-          mqtt:
-            qos: 1
-    messages:
-      ComplianceEvent:
-        payload:
-          type: object
-          required: [eventId, taskId, agentId, zone, eventType, timestamp]
-          properties:
-            eventId:
-              type: string
-              format: uuid
-            taskId:
-              type: string
-              format: uuid
-            agentId:
-              type: string
-              format: uuid
-            zone:
-              type: string
-            eventType:
-              type: string
-              enum: [zone_entry, zone_exit, restricted_zone_check, chain_of_custody]
-            complianceStatus:
-              type: string
-              enum: [passed, failed, exception]
-            auditCorrelationId:
-              type: string
-              format: uuid
-              description: Links back to the orchestrator AuditEvent
-            timestamp:
-              type: string
-              format: date-time
 
-  rocom/v0/capability/declare:
+  rocom-capability-declare:
+    address: rocom/v0/capability/declare
     description: >
       Rocom extension — robot declares Rocom-profile capabilities
       beyond standard VDA 5050. Keys must match capability-registry.yaml.
-    subscribers:
-      vda5050-gateway:
-        bind:
-          mqtt:
-            qos: 1
-    messages:
-      CapabilityDeclaration:
-        payload:
-          type: object
-          required: [serialNumber, capabilities]
-          properties:
-            serialNumber:
-              type: string
-            capabilities:
-              type: array
-              items:
-                type: object
-                required: [key, level, certified]
-                properties:
-                  key:
-                    type: string
-                    description: Capability key from capability-registry.yaml
-                  level:
-                    type: string
-                    enum: [basic, advanced, certified]
-                  certified:
-                    type: boolean
-                  expirationDate:
-                    type: string
-                    format: date
 
-  rocom/v0/chainOfCustody/event:
+  rocom-chain-of-custody-event:
+    address: rocom/v0/chainOfCustody/event
     description: >
       Rocom extension — chain-of-custody handoff events for
       regulated transport (medication, samples).
-    subscribers:
-      vda5050-gateway:
-        bind:
-          mqtt:
-            qos: 1
+
+operations:
+  receiveFactsheet:
+    action: receive
+    channel:
+      $ref: '#/channels/vda5050-factsheet'
+    summary: Robot publishes its factsheet
+    description: Robot declares itself by publishing a VDA 5050 factsheet message
     messages:
-      ChainOfCustodyEvent:
-        payload:
-          type: object
-          required: [eventId, taskId, itemType, agentId, action, timestamp]
-          properties:
-            eventId:
-              type: string
-              format: uuid
-            taskId:
-              type: string
-              format: uuid
-            itemType:
-              type: string
-              enum: [medication, sample, meal, waste, linen]
-            agentId:
-              type: string
-              format: uuid
-            action:
-              type: string
-              enum: [picked_up, in_transit, delivered, handed_off]
-            custodySignature:
-              type: string
-              description: Cryptographic hash of custody state
-            timestamp:
-              type: string
-              format: date-time
+      - $ref: '#/components/messages/FactsheetMessage'
+
+  receiveState:
+    action: receive
+    channel:
+      $ref: '#/channels/vda5050-state'
+    summary: Robot publishes state updates
+    description: Robot publishes periodic state updates (position, battery, state)
+    messages:
+      - $ref: '#/components/messages/StateMessage'
+
+  receiveConnection:
+    action: receive
+    channel:
+      $ref: '#/channels/vda5050-connection'
+    summary: Robot publishes connection state
+    description: Robot publishes online/offline connection state
+    messages:
+      - $ref: '#/components/messages/ConnectionMessage'
+
+  sendOrder:
+    action: send
+    channel:
+      $ref: '#/channels/vda5050-order'
+    summary: Gateway dispatches order to robot
+    description: Orchestrator dispatches a navigation order to the robot
+    messages:
+      - $ref: '#/components/messages/OrderMessage'
+
+  sendCancel:
+    action: send
+    channel:
+      $ref: '#/channels/vda5050-cancel'
+    summary: Gateway sends order cancellation
+    description: Orchestrator sends a cancellation for an active order
+    messages:
+      - $ref: '#/components/messages/CancelMessage'
+
+  receiveComplianceEvent:
+    action: receive
+    channel:
+      $ref: '#/channels/rocom-compliance-event'
+    summary: Robot publishes compliance event on zone transition
+    description: Robot publishes compliance event when entering or leaving a zone
+    messages:
+      - $ref: '#/components/messages/ComplianceEvent'
+
+  receiveCapabilityDeclare:
+    action: receive
+    channel:
+      $ref: '#/channels/rocom-capability-declare'
+    summary: Robot declares Rocom-profile capabilities
+    description: Robot declares capabilities beyond standard VDA 5050 factsheet
+    messages:
+      - $ref: '#/components/messages/CapabilityDeclaration'
+
+  receiveChainOfCustodyEvent:
+    action: receive
+    channel:
+      $ref: '#/channels/rocom-chain-of-custody-event'
+    summary: Robot publishes chain-of-custody handoff event
+    description: Robot publishes custody handoff events for regulated transport
+    messages:
+      - $ref: '#/components/messages/ChainOfCustodyEvent'
 
 defaultContentType: application/json
 
 components:
+  messages:
+    FactsheetMessage:
+      payload:
+        type: object
+        required: [manufacturer, model, serialNumber, capabilities, version]
+        properties:
+          manufacturer:
+            type: string
+          model:
+            type: string
+          serialNumber:
+            type: string
+          capabilities:
+            type: object
+            additionalProperties: true
+          version:
+            type: object
+            properties:
+              vda5050:
+                type: string
+              manufacturer:
+                type: string
+
+    StateMessage:
+      payload:
+        type: object
+        required: [position, battery, state, timestamp]
+        properties:
+          position:
+            type: object
+            properties:
+              building:
+                type: string
+              floor:
+                type: string
+              node:
+                type: string
+          battery:
+            type: number
+            minimum: 0
+            maximum: 100
+          state:
+            type: string
+            enum: [IDLE, MOVING, WORKING, CHARGING, ERROR]
+          timestamp:
+            type: string
+            format: date-time
+
+    ConnectionMessage:
+      payload:
+        type: object
+        required: [online]
+        properties:
+          online:
+            type: boolean
+
+    OrderMessage:
+      payload:
+        type: object
+        required: [orderId, sequence, timestamp]
+        properties:
+          orderId:
+            type: string
+            description: Carries orchestrator allocation ID
+          sequence:
+            type: array
+            items:
+              $ref: '#/components/schemas/NavigationNode'
+          timestamp:
+            type: string
+            format: date-time
+
+    CancelMessage:
+      payload:
+        type: object
+        required: [orderId]
+        properties:
+          orderId:
+            type: string
+
+    ComplianceEvent:
+      payload:
+        type: object
+        required: [eventId, taskId, agentId, zone, eventType, timestamp]
+        properties:
+          eventId:
+            type: string
+            format: uuid
+          taskId:
+            type: string
+            format: uuid
+          agentId:
+            type: string
+            format: uuid
+          zone:
+            type: string
+          eventType:
+            type: string
+            enum: [zone_entry, zone_exit, restricted_zone_check, chain_of_custody]
+          complianceStatus:
+            type: string
+            enum: [passed, failed, exception]
+          auditCorrelationId:
+            type: string
+            format: uuid
+            description: Links back to the orchestrator AuditEvent
+          timestamp:
+            type: string
+            format: date-time
+
+    CapabilityDeclaration:
+      payload:
+        type: object
+        required: [serialNumber, capabilities]
+        properties:
+          serialNumber:
+            type: string
+          capabilities:
+            type: array
+            items:
+              type: object
+              required: [key, level, certified]
+              properties:
+                key:
+                  type: string
+                  description: Capability key from capability-registry.yaml
+                level:
+                  type: string
+                  enum: [basic, advanced, certified]
+                certified:
+                  type: boolean
+                expirationDate:
+                  type: string
+                  format: date
+
+    ChainOfCustodyEvent:
+      payload:
+        type: object
+        required: [eventId, taskId, itemType, agentId, action, timestamp]
+        properties:
+          eventId:
+            type: string
+            format: uuid
+          taskId:
+            type: string
+            format: uuid
+          itemType:
+            type: string
+            enum: [medication, sample, meal, waste, linen]
+          agentId:
+            type: string
+            format: uuid
+          action:
+            type: string
+            enum: [picked_up, in_transit, delivered, handed_off]
+          custodySignature:
+            type: string
+            description: Cryptographic hash of custody state
+          timestamp:
+            type: string
+            format: date-time
+
   schemas:
     NavigationNode:
       type: object
