@@ -78,7 +78,8 @@ jobs:
           path: spec/part-01-overview/ARM.md
 
       - name: Match contents
-        run: echo "${{ steps.match_file.outputs.contents }}"
+        if: contains(steps.match_file.outputs.contents, steps.read_file.outputs.contents)
+        run: echo "Found match ${{steps.match_file.outputs.contents, steps.read_file.outputs.contents}}"
 
   deploy:
     if: ${{ github.event_name == 'push'}}
