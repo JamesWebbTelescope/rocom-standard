@@ -71,14 +71,14 @@ jobs:
       - name: File contents
         run: echo "${{ steps.read_file.outputs.contents }}"
 
-      - name: Read file contents
-        id: read_file
+      - name: match file contents
+        id: match_file
         uses: andstor/file-reader-action@v1
         with:
           path: _site
 
-      - name: File contents
-        run: echo "${{ steps.read_file.outputs.contents }}"
+      - name: Match contents
+        run: echo "${{ steps.match_file.outputs.contents }}"
 
   deploy:
     if: ${{ github.event_name == 'push'}}
