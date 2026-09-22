@@ -7,9 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+- `illegal.json` with prohibited phrases list
+
 ### Changed
 - Added `.vibe` to `.gitignore`
 - Restructured `.github/workflows/pages.yml` workflow (added pull trigger, conditional job execution)
+- Added `check_site_match` job to pages.yml that reads and checks illegal.json
 
 ## Release History
 
