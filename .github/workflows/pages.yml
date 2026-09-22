@@ -10,6 +10,15 @@ on:
       - 'CONTRIBUTING.md'
       - 'build/**'
       - '.github/workflows/pages.yml'
+  pull:
+    branches: [main]
+    paths: 
+       - 'spec/**
+       - 'README.md'
+       - 'GOVERNANCE.md'
+       - 'CONTRIBUTING.md'
+       - 'build/**'
+       - '.github/workflows/pages.yml'
   workflow_dispatch:
 
 permissions:
