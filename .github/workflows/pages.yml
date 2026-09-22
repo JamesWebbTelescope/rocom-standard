@@ -77,7 +77,7 @@ jobs:
       - name: List of site file
         run: |
           bash build/_site
-          echo "${{bash ls}}"
+          echo "${{ls}}"
 
       - name: match file contents
         id: match_file
