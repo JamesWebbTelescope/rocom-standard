@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Added `.vibe` to `.gitignore`
-- Modified `.github/workflows/pages.yml`
+- Restructured `.github/workflows/pages.yml` workflow (added pull trigger, conditional job execution)
 
 ## Release History
 
