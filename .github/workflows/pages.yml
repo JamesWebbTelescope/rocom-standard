@@ -71,6 +71,9 @@ jobs:
       - name: File contents
         run: echo "${{ steps.read_file.outputs.contents }}"
 
+      - name: Build site
+        run: bash build/build.sh _site
+
       - name: match file contents
         id: match_file
         uses: andstor/file-reader-action@v1
