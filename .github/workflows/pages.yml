@@ -75,7 +75,7 @@ jobs:
         id: match_file
         uses: andstor/file-reader-action@v1
         with:
-          path: spec/**/**.md
+          path: spec/part-01-overview/ARM.md
 
       - name: Match contents
         run: echo "${{ steps.match_file.outputs.contents }}"
