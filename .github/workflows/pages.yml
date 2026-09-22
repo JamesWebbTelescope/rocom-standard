@@ -70,14 +70,6 @@ jobs:
 
       - name: File contents
         run: echo "${{ steps.read_file.outputs.contents }}"
-      
-      - name: Build site
-        run: bash build/build.sh _site
-      
-      - name: List of site file
-        run: |
-          bash build/_site
-          echo "${{ls}}"
 
       - name: match file contents
         id: match_file
