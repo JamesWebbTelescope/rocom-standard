@@ -57,8 +57,6 @@ jobs:
 
   check_site_match:
     if: ${{ github.event_name == 'push'}}
-    environment:
-      path: _site
     runs-on: ubuntu-latest
 
 
