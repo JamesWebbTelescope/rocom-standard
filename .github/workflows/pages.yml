@@ -71,14 +71,11 @@ jobs:
       - name: File contents
         run: echo "${{ steps.read_file.outputs.contents }}"
 
-      - name: Build site
-        run: bash build/build.sh _site
-
       - name: match file contents
         id: match_file
         uses: andstor/file-reader-action@v1
         with:
-          path: _site
+          path: spec/part-01-overview/ARM.md
 
       - name: Match contents
         run: echo "${{ steps.match_file.outputs.contents }}"
