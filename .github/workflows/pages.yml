@@ -71,7 +71,9 @@ jobs:
 
       - name: Fail if illegal phrases found
         if: steps.file_check.outputs.FILE_CHECK == 'FALSE'
-        run: exit 1
+        run: |
+          echo "Illegal phrases found!"
+          exit 1
           
 
   deploy:
