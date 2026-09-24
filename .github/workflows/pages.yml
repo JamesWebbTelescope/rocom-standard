@@ -66,7 +66,7 @@ jobs:
         run: python file_check.py
 
       - name: "Check file check variable"
-        run: echo "File check variable $github.environment.FILE_CHECK"
+        run: echo "File check variable $github.outputs.file_check"
           
 
   deploy:
