@@ -63,10 +63,11 @@ jobs:
         uses: actions/checkout@v1
 
       - name: Run file_check.py
+        id: file_check
         run: python file_check.py
 
-      - name: "Check file check variable"
-        run: echo "File check variable $github.outputs.file_check"
+      - name: "Check output"
+        run: echo "File check variable ${{steps.file_check.outputs.FILE_CHECK}}"
           
 
   deploy:
