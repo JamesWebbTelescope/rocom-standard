@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - `illegal.json` with prohibited phrases list
+- `file_check.py` - registry path resolution utility for illegal.json
 
 ### Changed
 - Added `.vibe` to `.gitignore`
