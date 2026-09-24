@@ -63,13 +63,7 @@ jobs:
         uses: actions/checkout@v1
 
       - name: Match file contents
-        id: match_file
-        steps:
-          name: Run file_check.py
-          uses: actions/checkout@v1
-          with:
-            path: spec
-          run: python file_check.py
+        run: python file_check.py
 
   deploy:
     if: ${{ github.event_name == 'push'}}
