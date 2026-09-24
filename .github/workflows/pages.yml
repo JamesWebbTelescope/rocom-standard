@@ -62,8 +62,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v1
 
-      - name: Match file contents
+      - name: Run file_check.py
         run: python file_check.py
+
+      - name: "Check file check variable"
+        run: echo "File check variable $github.environment.FILE_CHECK"
           
 
   deploy:
