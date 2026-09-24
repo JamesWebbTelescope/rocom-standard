@@ -66,7 +66,7 @@ jobs:
         run: python file_check.py
         if: github.environment.FILE_CHECK == true
         run: echo "No illegal matches found"
-        if: github.environment.FILE_CHECK == false
+        else: github.environment.FILE_CHECK == false
         run: echo "Matches found"
           
 
