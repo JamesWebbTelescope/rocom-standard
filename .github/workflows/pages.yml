@@ -65,9 +65,6 @@ jobs:
       - name: Match file contents
         run: python file_check.py
         if: github.environment.FILE_CHECK == true
-        run: echo "No illegal matches found"
-        else: github.environment.FILE_CHECK == false
-        run: echo "Matches found"
           
 
   deploy:
