@@ -68,6 +68,10 @@ jobs:
 
       - name: "Check output"
         run: echo "File check variable ${{steps.file_check.outputs.FILE_CHECK}}"
+
+      - name: Fail if illegal phrases found
+        if: steps.file_check.outputs.FILE_CHECK == 'FALSE'
+        run: exit 1
           
 
   deploy:
