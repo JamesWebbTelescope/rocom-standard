@@ -94,8 +94,10 @@ def main():
 
     if total_matches == 0:
         print("No illegal phrases found.")
+        return True
     else:
         print(f"\nFound {total_matches} match(es).")
+        return False
 
 if __name__ == "__main__":
     main()

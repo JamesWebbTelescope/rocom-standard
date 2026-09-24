@@ -9,13 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - `illegal.json` with prohibited phrases list
-- `file_check.py` - registry path resolution utility for illegal.json
+- `file_check.py` - registry path resolution utility for illegal.json (designed with the help of Mistral Vibe)
 
 ### Changed
 - Added `.vibe` to `.gitignore`
 - Restructured `.github/workflows/pages.yml` workflow (added pull trigger, conditional job execution)
 - Added `check_site_match` job to pages.yml that reads and checks illegal.json
-- Enhanced `file_check.py` with full CLI scanner: loads illegal phrases, scans spec/ directory for matches, supports case-sensitive flag and custom directory
+- Enhanced `file_check.py` with full CLI scanner: loads illegal phrases, scans spec/ directory for matches, supports case-sensitive flag and custom directory (designed with the help of Mistral Vibe)
 
 ## Release History
 
