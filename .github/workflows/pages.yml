@@ -64,7 +64,6 @@ jobs:
 
       - name: Match file contents
         run: python file_check.py
-        if: github.environment.FILE_CHECK == true
           
 
   deploy:
