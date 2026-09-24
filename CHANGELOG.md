@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Added `.vibe` to `.gitignore`
 - Restructured `.github/workflows/pages.yml` workflow (added pull trigger, conditional job execution)
-- Updated `check_site_match` job in pages.yml to use `python file_check.py` for scanning spec/ directory (designed with the help of Mistral Vibe)
+- Updated `check_site_match` job in pages.yml to use nested steps structure for running `python file_check.py` (designed with the help of Mistral Vibe)
 - Enhanced `file_check.py` with full CLI scanner: loads illegal phrases, scans spec/ directory for matches, supports case-sensitive flag and custom directory (designed with the help of Mistral Vibe)
 
 ## Release History
