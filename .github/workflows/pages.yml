@@ -62,24 +62,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v1
 
-      - name: Read file contents
-        id: read_file
-        uses: andstor/file-reader-action@v1
-        with:
-          path: "illegal.json"
-
-      - name: File contents
-        run: echo "${{ steps.read_file.outputs.contents }}"
-
-      - name: match file contents
+      - name: Match file contents
         id: match_file
-        uses: andstor/file-reader-action@v1
+        uses: actions/checkout@v1
         with:
-          path: spec/part-01-overview/ARM.md
-
-      - name: Match contents
-        if: contains(steps.match_file.outputs.contents, steps.read_file.outputs.contents)
-        run: echo "Found match ${{steps.match_file.outputs.contents}}"
+          path: spec
+        run: python file_check.py
 
   deploy:
     if: ${{ github.event_name == 'push'}}
